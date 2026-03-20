@@ -22,6 +22,8 @@ ASM330LHHSensor asmSens(&SENSORS_SPI, SENSORS_ASM_CS);
 LIS2MDLSensor lis(&SENSORS_SPI, SENSORS_LIS_CS);
 LPS22HBSensor lps(&SENSORS_SPI, SENSORS_LPS_CS);
 
+// #define SENSOR_DEBUG
+
 float g = 9.81;
 
 static constexpr uint32_t HZ = 40;
@@ -109,6 +111,65 @@ static bool readSensorData(Sample &s) {
   return true;
 }
 
+void sensorInit(){
+    pinMode(SENSORS_ASM_CS, OUTPUT); digitalWrite(SENSORS_ASM_CS, HIGH);
+    pinMode(SENSORS_LSM_CS, OUTPUT); digitalWrite(SENSORS_LSM_CS, HIGH);
+    pinMode(SENSORS_LIS_CS, OUTPUT); digitalWrite(SENSORS_LIS_CS, HIGH);
+    pinMode(SENSORS_LPS_CS, OUTPUT); digitalWrite(SENSORS_LPS_CS, HIGH);
+
+    #ifdef SENSOR_DEBUG
+        SerialUSB.println("spi begin");
+    #endif
+
+    SENSORS_SPI.begin();
+
+    LSM6DSO32StatusTypeDef lsmBeginStatus = lsm.begin();
+    #ifdef SENSOR_DEBUG
+        SerialUSB.println(lsmBeginStatus);
+        SerialUSB.println("lsm begin");
+    #endif
+    lsm.Set_G_FS(2000);
+    lsm.Set_G_ODR(100);
+    lsm.Set_X_FS(32);
+    lsm.Set_X_ODR(500);
+    lsm.Enable_X();
+    lsm.Enable_G();
+
+    delay(20);
+
+    ASM330LHHStatusTypeDef asmBeginStatus = asmSens.begin();
+    #ifdef SENSOR_DEBUG
+        SerialUSB.println(asmBeginStatus);
+        SerialUSB.println("asm begin");
+    #endif    
+    asmSens.Set_G_FS(4000);
+    asmSens.Set_G_ODR(100);
+    asmSens.Set_X_FS(16);
+    asmSens.Set_X_ODR(500);
+    asmSens.Enable_X();
+    asmSens.Enable_G();
+    
+    delay(20);
+
+    LIS2MDLStatusTypeDef lisBeginStatus = lis.begin();
+    #ifdef SENSOR_DEBUG
+        SerialUSB.println(lisBeginStatus);
+        SerialUSB.println("lis begin");
+    #endif
+    lis.SetOutputDataRate(100);
+    lis.Enable();
+    
+    delay(20);
+    
+    LPS22HBStatusTypeDef lpsBeginStatus = lps.begin();
+    #ifdef SENSOR_DEBUG
+        SerialUSB.println(lpsBeginStatus);
+        SerialUSB.println("lps begin");
+    #endif
+    lps.SetODR(100);
+    lps.Enable();
+}
+
 void setup()
 {
     delay(2000);
@@ -117,39 +178,8 @@ void setup()
     pinMode(LED_GREEN, OUTPUT);
     digitalWrite(LED_GREEN, HIGH);
 
-    Serial.println("spi begin");
-
-    SENSORS_SPI.begin();
-
-    Serial.println("spi begin");
-    SerialUSB.println(lsm.begin());
-    SerialUSB.println("lsm begin");
-    lsm.Set_G_FS(2000);
-    lsm.Set_G_ODR(100);
-    lsm.Set_X_FS(32);
-    lsm.Set_X_ODR(500);
-    lsm.Enable_X();
-    lsm.Enable_G();
-
-    SerialUSB.println(asmSens.begin());
-    SerialUSB.println("asm begin");
-    asmSens.Set_G_FS(4000);
-    asmSens.Set_G_ODR(100);
-    asmSens.Set_X_FS(16);
-    asmSens.Set_X_ODR(500);
-    asmSens.Enable_X();
-    asmSens.Enable_G();
-
-    SerialUSB.println(lis.begin());
-    lis.SetOutputDataRate(100);
-    SerialUSB.println(lis.Enable());
-    SerialUSB.println("lis begin");
+    sensorInit();
     
-
-    SerialUSB.println(lps.begin());
-    lps.SetODR(100);
-    SerialUSB.println(lps.Enable());
-    SerialUSB.println("lps begin");
     delay(10000);
     SerialUSB.println("READY");
     SerialUSB.println("index,t_us,lsm_ax,lsm_ay,lsm_az,lsm_gx,lsm_gy,lsm_gz,lis_mx,lis_my,lis_mz,asm_ax,asm_ay,asm_az,asm_gx,asm_gy,asm_gz,lps_p,lps_t");
